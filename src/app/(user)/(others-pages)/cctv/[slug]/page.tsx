@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 interface CCTVData {
   id: string;
@@ -14,7 +14,6 @@ interface CCTVData {
 
 const DetailCCTV = () => {
   const params = useParams();
-  const router = useRouter();
   const slug = params.slug as string;
   const [selectedCCTV, setSelectedCCTV] = useState("");
 

@@ -330,19 +330,6 @@ export default function ListLocation() {
     setSelectedLocation(null);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'text-green-600 dark:text-green-400';
-      case 'maintenance':
-        return 'text-yellow-600 dark:text-yellow-400';
-      case 'offline':
-        return 'text-red-600 dark:text-red-400';
-      default:
-        return 'text-gray-600 dark:text-gray-400';
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
