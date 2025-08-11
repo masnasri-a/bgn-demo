@@ -10,7 +10,31 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
+interface ListData{
+  date: string;
+  data: { [key: string]: number };
+}
+
 export default function StatisticsChart() {
+
+  const generateDummyData = (): ListData[] => {
+    const data: ListData[] = [];
+    for (let i = 0; i < 12; i++) {
+      const month = new Date(0, i).toLocaleString("default", { month: "short" });
+      data.push({
+        date: month,
+        data: {
+          permasalahan: Math.floor(Math.random() * 51) + 50,
+          progress: Math.floor(Math.random() * 51) + 50,
+          informasi: Math.floor(Math.random() * 51) + 50,
+        },
+      });
+    }
+    return data;
+  };
+
+  let data = generateDummyData();
+
   const options: ApexOptions = {
     legend: {
       show: false, // Hide legend
@@ -69,20 +93,7 @@ export default function StatisticsChart() {
     },
     xaxis: {
       type: "category", // Category-based x-axis
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      categories: data.map(item => item.date),
       axisBorder: {
         show: false, // Hide x-axis border
       },
@@ -111,12 +122,16 @@ export default function StatisticsChart() {
 
   const series = [
     {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+      name: "Permasalahan",
+      data: data.map(item => item.data.permasalahan),
     },
     {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
+      name: "Progress",
+      data: data.map(item => item.data.progress),
+    },
+    {
+      name: "Informasi",
+      data: data.map(item => item.data.informasi),
     },
   ];
   return (
@@ -129,9 +144,6 @@ export default function StatisticsChart() {
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
             Target you’ve set for each month
           </p>
-        </div>
-        <div className="flex items-start w-full gap-3 sm:justify-end">
-          <ChartTab />
         </div>
       </div>
 

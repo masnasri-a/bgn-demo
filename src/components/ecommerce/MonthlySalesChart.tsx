@@ -3,7 +3,8 @@ import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { MoreDotIcon } from "@/icons";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 
 // Dynamically import the ReactApexChart component
@@ -11,7 +12,31 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
+interface ListData{
+  date: string;
+  total: number;
+}
+
 export default function MonthlySalesChart() {
+
+  const [data, setData] = useState<ListData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_date_last_14_days")
+      .then(res => res.json())
+      .then((result: ListData[]) => {
+        // Format date to 'DD MMM' like before
+        const formatted = result.map(item => ({
+          date: new Date(item.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
+          total: item.total
+        }));
+        setData(formatted);
+      })
+      .catch(() => setData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -39,20 +64,7 @@ export default function MonthlySalesChart() {
       colors: ["transparent"],
     },
     xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+        categories: data.map(item => item.date),
       axisBorder: {
         show: false,
       },
@@ -93,8 +105,8 @@ export default function MonthlySalesChart() {
   };
   const series = [
     {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+      name: "Total",
+      data: data.map(item => item.total),
     },
   ];
   const [isOpen, setIsOpen] = useState(false);
@@ -111,7 +123,7 @@ export default function MonthlySalesChart() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Monthly Sales
+          Trend Laporan
         </h3>
 
         <div className="relative inline-block">
@@ -141,12 +153,16 @@ export default function MonthlySalesChart() {
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
-          <ReactApexChart
-            options={options}
-            series={series}
-            type="bar"
-            height={180}
-          />
+          {loading ? (
+            <Skeleton className="w-full h-[180px]" />
+          ) : (
+            <ReactApexChart
+              options={options}
+              series={series}
+              type="bar"
+              height={180}
+            />
+          )}
         </div>
       </div>
     </div>

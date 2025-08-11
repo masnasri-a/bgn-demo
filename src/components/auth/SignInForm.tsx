@@ -8,8 +8,38 @@ import Link from "next/link";
 import React, { useState } from "react";
 
 export default function SignInForm() {
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const handleButtonClick = () => {
+    if (formRef.current) {
+      formRef.current.requestSubmit();
+    }
+  };
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (username === "admin" && password === "secret") {
+      localStorage.setItem("auth", JSON.stringify({ username }));
+      window.location.replace("/");
+    } else {
+      setError("Invalid username or password");
+    }
+  };
+
+  React.useEffect(() => {
+    // If already logged in, redirect to /
+    if (typeof window !== "undefined") {
+      const auth = localStorage.getItem("auth");
+      if (auth) {
+        window.location.replace("/");
+      }
+    }
+  }, []);
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
@@ -23,13 +53,18 @@ export default function SignInForm() {
             </p>
           </div>
           <div>
-            <form>
+            <form ref={formRef} onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label>
-                    Email <span className="text-error-500">*</span>{" "}
+                    Username <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@gmail.com" type="email" />
+                  <Input
+                    placeholder="admin"
+                    type="text"
+                    defaultValue={username}
+                    onChange={e => setUsername(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label>
@@ -38,7 +73,9 @@ export default function SignInForm() {
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
+                      placeholder="secret"
+                      defaultValue={password}
+                      onChange={e => setPassword(e.target.value)}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -67,10 +104,13 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
+                  <Button className="w-full" size="sm" onClick={handleButtonClick}>
                     Sign in
                   </Button>
                 </div>
+                {error && (
+                  <div className="text-error-500 text-sm mt-2">{error}</div>
+                )}
               </div>
             </form>
           </div>

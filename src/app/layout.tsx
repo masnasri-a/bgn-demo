@@ -1,3 +1,5 @@
+import React from 'react';
+import AuthRedirect from '@/components/auth/AuthRedirect';
 import { Outfit } from 'next/font/google';
 import './globals.css';
 
@@ -16,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.className} dark:bg-gray-900`}>
+        <AuthRedirect />
         <ThemeProvider>
           <SidebarProvider>{children}</SidebarProvider>
         </ThemeProvider>
