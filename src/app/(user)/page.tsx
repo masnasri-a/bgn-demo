@@ -18,8 +18,8 @@ import MapboxChart from "@/components/charts/maps/MapBoxChart";
 
 export const metadata: Metadata = {
   title:
-    "Next.js E-commerce Dashboard | TailAdmin - Next.js Dashboard Template",
-  description: "This is Next.js Home for TailAdmin Dashboard Template",
+    "Badan Gizi Nasional Dashboard",
+  description: "Dashboard untuk memantau dan menganalisis data gizi nasional",
 };
 
 export default function Ecommerce() {
