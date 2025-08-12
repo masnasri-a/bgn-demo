@@ -25,20 +25,27 @@ function getColor(idx: number) {
 function useWordCloudData() {
   const [data, setData] = useState<{ word: string; count: number }[]>([])
   const [loading, setLoading] = useState(true)
+      const { selectedFilter } = useSelectFilterStore();
+  
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BASE_API + "/report_user/wordcloud")
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/wordcloud"
+    if (selectedFilter && selectedFilter !== "Semua") {
+      url += `?category=${encodeURIComponent(selectedFilter)}`;
+    }
+    fetch(url)
       .then(res => res.json())
       .then((result: { word: string; count: number }[]) => {
         setData(result)
       })
       .catch(() => setData([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedFilter])
   return { data, loading }
 }
 
 
 import { useRef, useLayoutEffect } from "react"
+import { useSelectFilterStore } from "@/components/select/select-filter"
 
 export default function WordCloud() {
   const { data, loading } = useWordCloudData()
@@ -76,7 +83,7 @@ export default function WordCloud() {
           <div
             ref={containerRef}
             className="flex flex-wrap items-center justify-center gap-2 p-4"
-            style={{ minHeight: 300, maxHeight: 400, overflow: "hidden" }}
+            style={{ minHeight: 300, maxHeight: 300, overflow: "hidden" }}
           >
             {sorted.map((item, idx) => (
               <span
@@ -89,7 +96,6 @@ export default function WordCloud() {
                   margin: "0px",
                   display: "inline-block",
                   transform: `rotate(${(idx % 5 - 2) * 8}deg)`
-                  // ...existing code...
                 }}
               >
                 {item.word}

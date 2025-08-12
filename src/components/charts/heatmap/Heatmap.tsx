@@ -6,6 +6,7 @@ import ComponentCard from "@/components/common/ComponentCard"
 import {
   ChartContainer,
 } from "@/components/ui/chart"
+import { useSelectFilterStore } from "@/components/select/select-filter"
 
 // Simple heatmap rendering using divs, styled to match other charts
 const BLUE_SKY = "#38bdf8"
@@ -13,15 +14,21 @@ const BLUE_SKY = "#38bdf8"
 function useHeatmapData() {
   const [data, setData] = useState<{ date: string; total: number }[]>([])
   const [loading, setLoading] = useState(true)
+  const { selectedFilter } = useSelectFilterStore();
+
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BASE_API + "/report_user/heatmap")
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/heatmap"
+    if (selectedFilter && selectedFilter !== "Semua") {
+      url += `?category=${encodeURIComponent(selectedFilter)}`;
+    }
+    fetch(url)
       .then(res => res.json())
       .then((result: { date: string; total: number }[]) => {
         setData(result)
       })
       .catch(() => setData([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedFilter])
   return { data, loading }
 }
 

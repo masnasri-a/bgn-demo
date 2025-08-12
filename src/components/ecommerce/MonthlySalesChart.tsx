@@ -6,6 +6,7 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dropdown } from "../ui/dropdown/Dropdown";
+import { useSelectFilterStore } from "../select/select-filter";
 
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -21,9 +22,14 @@ export default function MonthlySalesChart() {
 
   const [data, setData] = useState<ListData[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const { selectedFilter } = useSelectFilterStore();
+  
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_date_last_14_days")
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_date_last_14_days";
+    if (selectedFilter && selectedFilter !== "Semua") {
+      url += `?category=${encodeURIComponent(selectedFilter)}`;
+    }
+    fetch(url)
       .then(res => res.json())
       .then((result: ListData[]) => {
         // Format date to 'DD MMM' like before
@@ -35,7 +41,7 @@ export default function MonthlySalesChart() {
       })
       .catch(() => setData([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [selectedFilter]);
 
   const options: ApexOptions = {
     colors: ["#465fff"],

@@ -7,7 +7,7 @@ interface SelectFilterState {
 }
 
 const useSelectFilterStore = create<SelectFilterState>((set) => ({
-    selectedFilter: 'Laporan Permasalahan',
+    selectedFilter: 'Semua',
     setSelectedFilter: (filter) => set({ selectedFilter: filter }),
 }));
 
@@ -15,6 +15,7 @@ const SelectFilter = () => {
     const { selectedFilter, setSelectedFilter } = useSelectFilterStore();
 
     const options = [
+        'Semua',
         'Laporan Permasalahan',
         'Laporan Progress',
         'Laporan Informasi'

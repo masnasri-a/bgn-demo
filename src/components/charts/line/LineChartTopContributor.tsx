@@ -24,6 +24,7 @@ export const description = "A multiple line chart"
 
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useSelectFilterStore } from "@/components/select/select-filter"
 
 const COLORS = [
   "#38bdf8", // blue sky
@@ -37,8 +38,14 @@ function useTrendContributorData() {
   const [chartData, setChartData] = useState<any[]>([])
   const [contributors, setContributors] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const { selectedFilter } = useSelectFilterStore();
+  
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BASE_API + "/report_user/trend_contributor")
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/trend_contributor";
+    if (selectedFilter && selectedFilter !== "Semua") {
+      url += `?category=${encodeURIComponent(selectedFilter)}`;
+    }
+    fetch(url)
       .then(res => res.json())
       .then((result: { date: string; data: { name: string; total: number }[] }[]) => {
         // Get all contributor names
@@ -59,7 +66,7 @@ function useTrendContributorData() {
       })
       .catch(() => setChartData([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedFilter])
   return { chartData, contributors, loading }
 }
 

@@ -5,6 +5,7 @@ import { Pie, PieChart } from "recharts"
 import { Skeleton } from "@/components/ui/skeleton"
 import ComponentCard from "@/components/common/ComponentCard"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useSelectFilterStore } from "@/components/select/select-filter"
 
 const SENTIMENT_COLORS: Record<string, string> = {
   positif: "#34d399", // green
@@ -15,22 +16,28 @@ const SENTIMENT_COLORS: Record<string, string> = {
 function useSentimentData() {
   const [data, setData] = useState<{ sentiment: string; total: number }[]>([])
   const [loading, setLoading] = useState(true)
+    const { selectedFilter } = useSelectFilterStore();
+
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_sentiment")
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_sentiment"
+    if (selectedFilter && selectedFilter !== "Semua") {
+      url += `?category=${encodeURIComponent(selectedFilter)}`;
+    }
+    fetch(url)
       .then(res => res.json())
       .then((result: { sentiment: string; total: number }[]) => {
         setData(result)
       })
       .catch(() => setData([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedFilter])
   return { data, loading }
 }
 
 function generateFillColor(list: { sentiment: string; total: number }[]) {
   return list.map(item => ({
     ...item,
-    fill: SENTIMENT_COLORS[item.sentiment] || "#38bdf8"
+    fill: SENTIMENT_COLORS[item.sentiment.toLowerCase()] || "#38bdf8"
   }))
 }
 

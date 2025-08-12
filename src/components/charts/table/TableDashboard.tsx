@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import ComponentCard from "@/components/common/ComponentCard"
+import { useSelectFilterStore } from "@/components/select/select-filter"
 
 function useDescData() {
   const [data, setData] = useState<{
@@ -12,15 +13,21 @@ function useDescData() {
     created_at: string
   }[]>([])
   const [loading, setLoading] = useState(true)
+    const { selectedFilter } = useSelectFilterStore();
+
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BASE_API + "/report_user/desc_data")
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/desc_data"
+    if (selectedFilter && selectedFilter !== "Semua") {
+      url += `?category=${encodeURIComponent(selectedFilter)}`;
+    }
+    fetch(url)
       .then(res => res.json())
       .then((result) => {
         setData(result)
       })
       .catch(() => setData([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedFilter])
   return { data, loading }
 }
 
@@ -32,6 +39,7 @@ function formatDate(dateStr: string) {
 
 export default function TableDashboard() {
   const { data, loading } = useDescData()
+
 
   return (
     <ComponentCard title="Data Laporan" className="w-full h-[450px]">

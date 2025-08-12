@@ -2,202 +2,178 @@
 import React, { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 interface MapboxChartProps {
   className?: string;
   height?: string;
 }
 
+
+const GEOJSON_URL = 'https://cdn.jsdelivr.net/gh/masnasri-a/dir@main/38%20Provinsi%20Indonesia%20-%20Provinsi.json';
+
 const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400px" }) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = React.useState(false);
+  const [geojson, setGeojson] = React.useState<any>(null);
+  const [provinsiList, setProvinsiList] = React.useState<string[]>([]);
+  const [selectedProvinsi, setSelectedProvinsi] = React.useState<string>("all");
 
+  // Fetch geojson and provinsi list
   useEffect(() => {
-    // Set the access token
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_API || 'YOUR_MAPBOX_ACCESS_TOKEN';
-    
-    if (!mapContainerRef.current) return;
+    fetch(GEOJSON_URL)
+      .then(res => res.json())
+      .then(data => {
+        setGeojson(data);
+        const provs = data.features.map((f: any) => f.properties.PROVINSI);
+        setProvinsiList(provs);
+      });
+  }, []);
 
-    // Initialize the map
+  // Mapbox logic
+  useEffect(() => {
+    if (!geojson || !mapContainerRef.current) return;
+
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_API || 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+    // Initialize map
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12', // Light style for better readability
-      center: [106.8456, -6.2088], // Jakarta coordinates (longitude, latitude)
-      zoom: 5, // Zoom level to show Indonesia
-      projection: 'mercator' // Map projection
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [113.9213, -0.7893], // Center Indonesia
+      zoom: 4,
+      projection: 'mercator'
     });
 
-    // Wait for the map to load
     mapRef.current.on('load', () => {
       if (!mapRef.current) return;
-      
-      // Add earthquake data source
-      mapRef.current.addSource('earthquakes', {
-        type: 'geojson',
-        data: 'https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson',
-        cluster: true,
-        clusterMaxZoom: 14, // Max zoom to cluster points on
-        clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
-      });
 
-      // Add cluster layer
-      mapRef.current.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'earthquakes',
-        filter: ['has', 'point_count'],
-        paint: {
-          // Use step expressions (https://docs.mapbox.com/style-spec/reference/expressions/#step)
-          // with three steps to implement three types of circles:
-          //   * Blue, 20px circles when point count is less than 100
-          //   * Yellow, 30px circles when point count is between 100 and 750
-          //   * Pink, 40px circles when point count is greater than or equal to 750
-          'circle-color': [
-            'step',
-            ['get', 'point_count'],
-            '#51bbd6',
-            100,
-            '#f1f075',
-            750,
-            '#f28cb1'
-          ],
-          'circle-radius': [
-            'step',
-            ['get', 'point_count'],
-            20,
-            100,
-            30,
-            750,
-            40
-          ]
-        }
-      });
-
-      // Add cluster count layer
-      mapRef.current.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'earthquakes',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 12
-        }
-      });
-
-      // Add unclustered point layer
-      mapRef.current.addLayer({
-        id: 'unclustered-point',
-        type: 'circle',
-        source: 'earthquakes',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-color': '#11b4da',
-          'circle-radius': 4,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#fff'
-        }
-      });
-
-      // Inspect a cluster on click
-      mapRef.current.on('click', 'clusters', (e) => {
-        if (!mapRef.current) return;
-        
-        const features = mapRef.current.queryRenderedFeatures(e.point, {
-          layers: ['clusters']
+      // Add geojson source
+      if (!mapRef.current.getSource('provinsi')) {
+        mapRef.current.addSource('provinsi', {
+          type: 'geojson',
+          data: geojson
         });
-        
-        const clusterId = features[0].properties?.cluster_id;
-        const source = mapRef.current.getSource('earthquakes') as mapboxgl.GeoJSONSource;
-        
-        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err || !mapRef.current || zoom === null || zoom === undefined) return;
+      }
 
-          mapRef.current.easeTo({
-            center: (features[0].geometry as any).coordinates,
-            zoom: zoom
-          });
+      // Add layer for provinsi
+      if (!mapRef.current.getLayer('provinsi-layer')) {
+        mapRef.current.addLayer({
+          id: 'provinsi-layer',
+          type: 'fill',
+          source: 'provinsi',
+          paint: {
+            'fill-color': '#51bbd6',
+            'fill-opacity': 0.5
+          },
+          filter: ['all']
         });
-      });
+      }
 
-      // Show popup on unclustered point click
-      mapRef.current.on('click', 'unclustered-point', (e) => {
-        if (!mapRef.current || !e.features || e.features.length === 0) return;
-        
-        const coordinates = (e.features[0].geometry as any).coordinates.slice();
-        const mag = e.features[0].properties?.mag;
-        const tsunami = e.features[0].properties?.tsunami;
+      // Add border layer
+      if (!mapRef.current.getLayer('provinsi-border')) {
+        mapRef.current.addLayer({
+          id: 'provinsi-border',
+          type: 'line',
+          source: 'provinsi',
+          paint: {
+            'line-color': '#333',
+            'line-width': 1
+          },
+          filter: ['all']
+        });
+      }
 
-        // Ensure that if the map is zoomed out such that multiple
-        // copies of the feature are visible, the popup appears
-        // over the copy being pointed to.
-        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-        }
+      setIsMapLoaded(true);
 
+      // Add click event for tooltip
+      mapRef.current.on('click', 'provinsi-layer', (e: any) => {
+        if (!e.features || e.features.length === 0) return;
+        const feature = e.features[0];
+        const coordinates = e.lngLat;
+        const props = feature.properties;
+        // Build HTML for all properties
+        const html = `<div style="min-width:180px;padding:8px 10px;">
+          <h3 style="margin:0 0 6px 0;font-size:15px;font-weight:bold;">${props.PROVINSI || 'Provinsi'}</h3>
+          <table style="font-size:13px;color:#444;">
+            ${Object.entries(props).map(([k,v]) => `<tr><td style='padding-right:8px;'>${k}</td><td><b>${v}</b></td></tr>`).join('')}
+          </table>
+        </div>`;
         new mapboxgl.Popup()
           .setLngLat(coordinates)
-          .setHTML(`
-            <div style="padding: 10px;">
-              <h3 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">Earthquake Data</h3>
-              <p style="margin: 0; font-size: 12px; color: #666;">
-                Magnitude: <strong>${mag}</strong><br>
-                Tsunami: <strong>${tsunami === 1 ? 'Yes' : 'No'}</strong>
-              </p>
-            </div>
-          `)
-          .addTo(mapRef.current);
-      });
-
-      // Change cursor on hover
-      mapRef.current.on('mouseenter', 'clusters', () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = 'pointer';
-        }
-      });
-
-      mapRef.current.on('mouseleave', 'clusters', () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = '';
-        }
-      });
-
-      mapRef.current.on('mouseenter', 'unclustered-point', () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = 'pointer';
-        }
-      });
-
-      mapRef.current.on('mouseleave', 'unclustered-point', () => {
-        if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = '';
-        }
+          .setHTML(html)
+          .addTo(mapRef.current!);
       });
     });
 
-    // Cleanup function
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
       }
     };
+  }, [geojson]);
+
+  // Update filter when selectedProvinsi changes
+  useEffect(() => {
+  if (!mapRef.current || !isMapLoaded) return;
+  if (selectedProvinsi === "all") {
+    mapRef.current.setFilter('provinsi-layer', ['all']);
+    mapRef.current.setFilter('provinsi-border', ['all']);
+  } else {
+    mapRef.current.setFilter('provinsi-layer', ['==', ['get', 'PROVINSI'], selectedProvinsi]);
+    mapRef.current.setFilter('provinsi-border', ['==', ['get', 'PROVINSI'], selectedProvinsi]);
+    const feature = geojson.features.find((f: any) => f.properties.PROVINSI === selectedProvinsi);
+    if (feature) {
+      const turf = (window as any).turf;
+      if (turf) {
+        const bbox = turf.bbox(feature);
+        mapRef.current.fitBounds(bbox, { padding: 40 });
+      }
+    }
+  }
+}, [selectedProvinsi, geojson, isMapLoaded]);
+
+  // Load turf.js for bbox
+  useEffect(() => {
+    if (!(window as any).turf) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js';
+      script.async = true;
+      script.onload = () => {
+        // turf loaded
+      };
+      document.body.appendChild(script);
+    }
   }, []);
 
   return (
     <div className={`relative ${className}`}>
-      {/* Info indicator */}
-      {/* <div className="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur-sm rounded-md px-2 py-1 text-xs font-medium shadow-sm">
-        Earthquake Data Clustering
-      </div> */}
-      
-      <div 
-        ref={mapContainerRef} 
-        style={{ width: '100%', height }} 
+      <div className="mb-2 flex items-center gap-2 justify-end">
+        <label htmlFor="provinsi" className="text-sm font-medium">Provinsi:</label>
+        <Select
+          value={selectedProvinsi}
+          onValueChange={setSelectedProvinsi}
+        >
+          <SelectTrigger className="w-[220px] border rounded px-2 py-1 text-sm">
+            <SelectValue placeholder="Semua Provinsi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Provinsi</SelectItem>
+            {provinsiList.map(prov => (
+              <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div
+        ref={mapContainerRef}
+        style={{ width: '100%', height }}
         className="rounded-lg overflow-hidden border"
       />
     </div>
   );
 };
 
-export default MapboxChart
+export default MapboxChart;
