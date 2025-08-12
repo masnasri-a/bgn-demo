@@ -76,7 +76,7 @@ function useTrendContributorData() {
 export function LineChartTopContributor() {
   const { chartData, contributors, loading } = useTrendContributorData()
   return (
-    <ComponentCard title="Trend Contributor" className="w-full max-h-[450px]">
+    <ComponentCard title="Trend Contributor" className="w-full max-h-[500px]">
       {loading ? (
         <Skeleton className="w-full h-[300px]" />
       ) : (

@@ -20,6 +20,7 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
   const [geojson, setGeojson] = React.useState<any>(null);
   const [provinsiList, setProvinsiList] = React.useState<string[]>([]);
   const [selectedProvinsi, setSelectedProvinsi] = React.useState<string>("all");
+  const [jakartaGeojson, setJakartaGeojson] = React.useState<any>(null);
 
   // Fetch geojson and provinsi list
   useEffect(() => {
@@ -31,6 +32,17 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
         setProvinsiList(provs);
       });
   }, []);
+
+  // Fetch Jakarta geojson only when needed
+  useEffect(() => {
+    if (selectedProvinsi === 'DKI Jakarta' || selectedProvinsi === 'Jakarta') {
+      fetch('https://cdn.jsdelivr.net/gh/masnasri-a/dir@main/jakarta%20(1).json')
+        .then(res => res.json())
+        .then(data => setJakartaGeojson(data));
+    } else {
+      setJakartaGeojson(null);
+    }
+  }, [selectedProvinsi]);
 
   // Mapbox logic
   useEffect(() => {
@@ -70,10 +82,6 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
           },
           filter: ['all']
         });
-      }
-
-      // Add border layer
-      if (!mapRef.current.getLayer('provinsi-border')) {
         mapRef.current.addLayer({
           id: 'provinsi-border',
           type: 'line',
@@ -87,8 +95,124 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
       }
 
       setIsMapLoaded(true);
+    });
 
-      // Add click event for tooltip
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+      }
+    };
+  }, [geojson]);
+
+  // Update filter and Jakarta layer when selectedProvinsi changes
+  useEffect(() => {
+    if (!mapRef.current || !isMapLoaded) return;
+
+    // Remove previous Jakarta layer/source if exists
+    if (mapRef.current.getLayer('jakarta-point')) {
+      mapRef.current.removeLayer('jakarta-point');
+    }
+    if (mapRef.current.getSource('jakarta')) {
+      mapRef.current.removeSource('jakarta');
+    }
+
+    // Remove previous event listeners for popup
+
+    if (selectedProvinsi === "all") {
+      mapRef.current.setFilter('provinsi-layer', ['all']);
+      mapRef.current.setFilter('provinsi-border', ['all']);
+
+      // Enable provinsi click popup
+      mapRef.current.on('click', 'provinsi-layer', (e: any) => {
+        if (!e.features || e.features.length === 0) return;
+        const feature = e.features[0];
+        const coordinates = e.lngLat;
+        const props = feature.properties;
+        // Build HTML for all properties
+        const html = `<div style="min-width:160px;padding:10px 14px;background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.08);font-family:inherit;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;color:#222;">${props.PROVINSI || 'Provinsi'}</div>
+          <table style="width:100%;font-size:13px;color:#444;border-collapse:collapse;">
+            ${Object.entries(props).map(([k,v]) => `<tr><td style='padding:2px 8px 2px 0;color:#888;'>${k}</td><td style='padding:2px 0;font-weight:500;color:#222;'>${v}</td></tr>`).join('')}
+          </table>
+        </div>`;
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML(html)
+          .addTo(mapRef.current!);
+      });
+    } else if (selectedProvinsi === 'DKI Jakarta' || selectedProvinsi === 'Jakarta') {
+      mapRef.current.setFilter('provinsi-layer', ['==', ['get', 'PROVINSI'], 'DKI Jakarta']);
+      mapRef.current.setFilter('provinsi-border', ['==', ['get', 'PROVINSI'], 'DKI Jakarta']);
+      const feature = geojson.features.find((f: any) => f.properties.PROVINSI === 'DKI Jakarta');
+      if (feature) {
+        const turf = (window as any).turf;
+        if (turf) {
+          const bbox = turf.bbox(feature);
+          mapRef.current.fitBounds(bbox, { padding: 40 });
+        }
+      }
+
+      // Add Jakarta source & layer
+      if (jakartaGeojson) {
+        mapRef.current.addSource('jakarta', {
+          type: 'geojson',
+          data: jakartaGeojson
+        });
+        mapRef.current.addLayer({
+          id: 'jakarta-point',
+          type: 'circle',
+          source: 'jakarta',
+          paint: {
+            'circle-radius': 8,
+            'circle-color': '#e11d48',
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#fff'
+          }
+        });
+
+        // Popup on hover
+        let popup: mapboxgl.Popup | null = null;
+        mapRef.current.on('mouseenter', 'jakarta-point', (e: any) => {
+          if (mapRef.current) {
+            mapRef.current.getCanvas().style.cursor = 'pointer';
+          }
+          if (!e.features || e.features.length === 0) return;
+          const feature = e.features[0];
+          const coordinates = feature.geometry.coordinates;
+          const props = feature.properties;
+          const html = `<div style="min-width:160px;padding:10px 14px;background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.08);font-family:inherit; z-index:99999">
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px;color:#222;">${props.nm_kabupaten || 'Kabupaten'}</div>
+            <table style="width:100%;font-size:13px;color:#444;border-collapse:collapse;">
+              ${Object.entries(props).map(([k,v]) => `<tr><td style='padding:2px 8px 2px 0;color:#888;'>${k}</td><td style='padding:2px 0;font-weight:500;color:#222;'>${v}</td></tr>`).join('')}
+            </table>
+          </div>`;
+          popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false })
+            .setLngLat(coordinates)
+            .setHTML(html)
+            .addTo(mapRef.current!);
+        });
+        mapRef.current.on('mouseleave', 'jakarta-point', () => {
+          if (mapRef.current) {
+            mapRef.current.getCanvas().style.cursor = '';
+          }
+          if (popup) {
+            popup.remove();
+            popup = null;
+          }
+        });
+      }
+    } else {
+      mapRef.current.setFilter('provinsi-layer', ['==', ['get', 'PROVINSI'], selectedProvinsi]);
+      mapRef.current.setFilter('provinsi-border', ['==', ['get', 'PROVINSI'], selectedProvinsi]);
+      const feature = geojson.features.find((f: any) => f.properties.PROVINSI === selectedProvinsi);
+      if (feature) {
+        const turf = (window as any).turf;
+        if (turf) {
+          const bbox = turf.bbox(feature);
+          mapRef.current.fitBounds(bbox, { padding: 40 });
+        }
+      }
+      // Enable provinsi click popup
       mapRef.current.on('click', 'provinsi-layer', (e: any) => {
         if (!e.features || e.features.length === 0) return;
         const feature = e.features[0];
@@ -106,34 +230,8 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
           .setHTML(html)
           .addTo(mapRef.current!);
       });
-    });
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-      }
-    };
-  }, [geojson]);
-
-  // Update filter when selectedProvinsi changes
-  useEffect(() => {
-  if (!mapRef.current || !isMapLoaded) return;
-  if (selectedProvinsi === "all") {
-    mapRef.current.setFilter('provinsi-layer', ['all']);
-    mapRef.current.setFilter('provinsi-border', ['all']);
-  } else {
-    mapRef.current.setFilter('provinsi-layer', ['==', ['get', 'PROVINSI'], selectedProvinsi]);
-    mapRef.current.setFilter('provinsi-border', ['==', ['get', 'PROVINSI'], selectedProvinsi]);
-    const feature = geojson.features.find((f: any) => f.properties.PROVINSI === selectedProvinsi);
-    if (feature) {
-      const turf = (window as any).turf;
-      if (turf) {
-        const bbox = turf.bbox(feature);
-        mapRef.current.fitBounds(bbox, { padding: 40 });
-      }
     }
-  }
-}, [selectedProvinsi, geojson, isMapLoaded]);
+  }, [selectedProvinsi, geojson, isMapLoaded, jakartaGeojson]);
 
   // Load turf.js for bbox
   useEffect(() => {

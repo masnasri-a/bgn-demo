@@ -54,7 +54,7 @@ const chartConfig = {
 export function BarChartTopContributor() {
     const { chartData, loading } = useContributorData()
     return (
-        <ComponentCard title="Kontributor Terbanyak" className="w-full max-h-[450px]">
+        <ComponentCard title="Kontributor Terbanyak" className="w-full max-h-[500px]">
             {loading ? (
                 <Skeleton className="w-full h-[220px]" />
             ) : (
