@@ -62,6 +62,18 @@ export default function PieChartSentiment() {
           </PieChart>
         )}
       </ChartContainer>
+      {/* Legend */}
+      {!loading && (
+        <div className="flex flex-wrap justify-center gap-4 mt-6">
+          {generateFillColor(data).map(item => (
+            <div key={item.sentiment} className="flex items-center gap-2 text-sm">
+              <span style={{background:item.fill, width:16, height:16, borderRadius:4, display:'inline-block', border:'1px solid #eee'}}></span>
+              <span className="font-medium capitalize">{item.sentiment}</span>
+              <span className="text-xs text-gray-500">({item.total})</span>
+            </div>
+          ))}
+        </div>
+      )}
     </ComponentCard>
   )
 }

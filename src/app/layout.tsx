@@ -5,6 +5,7 @@ import './globals.css';
 
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { Toaster } from '@/components/ui/sonner';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -21,6 +22,7 @@ export default function RootLayout({
         <AuthRedirect />
         <ThemeProvider>
           <SidebarProvider>{children}</SidebarProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -254,12 +254,12 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
           value={selectedProvinsi}
           onValueChange={setSelectedProvinsi}
         >
-          <SelectTrigger className="w-[220px] border rounded px-2 py-1 text-sm">
+          <SelectTrigger className="w-[220px] h-[200px] border rounded px-2 py-1 text-sm">
             <SelectValue placeholder="Semua Provinsi" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className='h-44'>
             <SelectItem value="all">Semua Provinsi</SelectItem>
-            {provinsiList.map(prov => (
+            {provinsiList.sort().map(prov => (
               <SelectItem key={prov} value={prov}>{prov}</SelectItem>
             ))}
           </SelectContent>

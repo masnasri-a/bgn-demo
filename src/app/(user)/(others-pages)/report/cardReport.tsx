@@ -31,7 +31,6 @@ export default function CardReport() {
 					<span className="font-semibold text-gray-800 dark:text-white text-base">Total Report</span>
 				</div>
 				<div className="text-2xl font-bold text-gray-800 dark:text-white mb-2">144 Report</div>
-				<div className="bg-green-100 text-green-600 rounded px-2 py-1 text-xs font-semibold w-fit">+2 report hari ini</div>
 			</div>
             <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm flex flex-col gap-2 border border-gray-100 dark:border-gray-800">
 				<div className="flex items-center mb-2">
@@ -41,7 +40,6 @@ export default function CardReport() {
 					<span className="font-semibold text-gray-800 dark:text-white text-base">Total Report Bulan Ini</span>
 				</div>
 				<div className="text-2xl font-bold text-gray-800 dark:text-white mb-2">15 Report</div>
-				<div className="bg-orange-100 text-orange-600 rounded px-2 py-1 text-xs font-semibold w-fit">-5 report dari bulan sebelumnya</div>
 			</div>
 		</div>
 	)

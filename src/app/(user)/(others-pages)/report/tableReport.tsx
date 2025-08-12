@@ -1,50 +1,60 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
-
-
+import Swal from 'sweetalert2'
+import { toast } from 'sonner'
 
 interface ReportData {
-    id: string
+    id: number
     title: string
-    created_by: string
-    created_at: string
+    url: string
+    generated_at: string
+    location_id: string
 }
 
-const dummyData: ReportData[] = [
-    { id: 'uuid-001', title: 'Monthly Sales Report', created_by: 'John Doe', created_at: '2024-01-15' },
-    { id: 'uuid-002', title: 'Quarterly Revenue Analysis', created_by: 'Jane Smith', created_at: '2024-01-14' },
-    { id: 'uuid-003', title: 'Customer Feedback Summary', created_by: 'Mike Johnson', created_at: '2024-01-13' },
-    { id: 'uuid-004', title: 'Product Performance Report', created_by: 'Sarah Wilson', created_at: '2024-01-12' },
-    { id: 'uuid-005', title: 'Marketing Campaign Results', created_by: 'Tom Brown', created_at: '2024-01-11' },
-    { id: 'uuid-006', title: 'Inventory Status Report', created_by: 'Lisa Davis', created_at: '2024-01-10' },
-    { id: 'uuid-007', title: 'Employee Performance Review', created_by: 'Chris Anderson', created_at: '2024-01-09' },
-    { id: 'uuid-008', title: 'Financial Statement Q4', created_by: 'Emma Martinez', created_at: '2024-01-08' },
-    { id: 'uuid-009', title: 'Website Analytics Report', created_by: 'David Lee', created_at: '2024-01-07' },
-    { id: 'uuid-010', title: 'Customer Acquisition Cost', created_by: 'Amy Taylor', created_at: '2024-01-06' },
-    { id: 'uuid-011', title: 'Social Media Engagement', created_by: 'Kevin White', created_at: '2024-01-05' },
-    { id: 'uuid-012', title: 'Cost Analysis Report', created_by: 'Rachel Green', created_at: '2024-01-04' },
-    { id: 'uuid-013', title: 'Risk Assessment Summary', created_by: 'Mark Thompson', created_at: '2024-01-03' },
-    { id: 'uuid-014', title: 'Compliance Audit Report', created_by: 'Julia Roberts', created_at: '2024-01-02' },
-    { id: 'uuid-015', title: 'Strategic Planning Document', created_by: 'Robert King', created_at: '2024-01-01' },
-]
 
 const ITEMS_PER_PAGE = 10
 
 export default function TableReport() {
     const [currentPage, setCurrentPage] = useState(1)
-    
-    const totalPages = Math.ceil(dummyData.length / ITEMS_PER_PAGE)
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    const currentData = dummyData.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+    const [totalPages, setTotalPages] = useState(1)
+    const [totalItems, setTotalItems] = useState(0)
+    const [reports, setReports] = useState<ReportData[]>([])
 
-    const handleDownload = (id: string, title: string) => {
-        console.log(`Downloading report: ${title} (${id})`)
-        // Add download logic here
+    useEffect(() => {
+        const fetchReports = async () => {
+            try {
+                const res = await fetch(process.env.NEXT_PUBLIC_BASE_API + `/report/get-all?page=${currentPage}&limit=${ITEMS_PER_PAGE}`)
+                const result = await res.json()
+                setReports(result.data || [])
+                setTotalPages(result.total_page || 1)
+                setTotalItems(result.total || 0)
+            } catch (error) {
+                console.error('Failed to fetch reports:', error)
+            }
+        }
+        fetchReports()
+    }, [currentPage])
+
+    const handleDownload = async (url: string, id: number) => {
+        // Download file
+        toast("Sedang mendownload...")
+        const url_download = `${process.env.NEXT_PUBLIC_BASE_API}/report/download?id=${id}&url=${url}`
+        const result = await fetch(url_download, {
+            method: 'GET'
+        })
+        const blob = await result.blob()
+        const urls = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = urls
+        a.download = `${id}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
     }
 
     const nextPage = () => {
@@ -66,37 +76,41 @@ export default function TableReport() {
                         <TableRow>
                             <TableHead>ID</TableHead>
                             <TableHead>Title</TableHead>
-                            <TableHead>Created By</TableHead>
-                            <TableHead>Created At</TableHead>
+                            <TableHead>Location ID</TableHead>
+                            <TableHead>Generated At</TableHead>
                             <TableHead>Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {currentData.map((report) => (
-                            <TableRow key={report.id}>
-                                <TableCell className="font-mono text-xs">{report.id}</TableCell>
-                                <TableCell className="font-medium">{report.title}</TableCell>
-                                <TableCell>{report.created_by}</TableCell>
-                                <TableCell>{report.created_at}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => handleDownload(report.id, report.title)}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Download className="h-4 w-4" />
-                                        
-                                    </Button>
-                                </TableCell>
+                        {reports.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center text-gray-500">Sedang Meload Data</TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            reports.map((report) => (
+                                <TableRow key={report.id}>
+                                    <TableCell className="font-mono text-xs">{report.id}</TableCell>
+                                    <TableCell className="font-medium">{report.title}</TableCell>
+                                    <TableCell>{report.location_id}</TableCell>
+                                    <TableCell>{new Date(report.generated_at).toLocaleString()}</TableCell>
+                                    <TableCell>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleDownload(report.url, report.id)}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
-                
                 <div className="flex items-center justify-between mt-4">
                     <div className="text-sm text-gray-600">
-                        Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, dummyData.length)} of {dummyData.length} results
+                        Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} of {totalItems} results
                     </div>
                     <div className="flex items-center gap-2">
                         <Button

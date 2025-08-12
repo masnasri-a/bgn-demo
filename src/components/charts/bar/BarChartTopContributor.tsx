@@ -31,9 +31,9 @@ function useContributorData() {
         }
         fetch(url)
             .then(res => res.json())
-            .then((result: { created_by: string; total: number }[]) => {
+            .then((result: { created_by: string; name: string; total: number }[]) => {
                 const parsed = result.map(item => ({
-                    name: item.created_by,
+                    name: item.name,
                     total: item.total
                 }))
                 setChartData(parsed)
