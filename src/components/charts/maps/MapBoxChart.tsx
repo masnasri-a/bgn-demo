@@ -267,7 +267,7 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
       </div>
       <div
         ref={mapContainerRef}
-        style={{ width: '100%', height }}
+        style={{ width: '100%', height: '700px' }}
         className="rounded-lg overflow-hidden border"
       />
     </div>
