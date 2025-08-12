@@ -21,7 +21,7 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
     // Initialize the map
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11', // Light style for better readability
+      style: 'mapbox://styles/mapbox/streets-v12', // Light style for better readability
       center: [106.8456, -6.2088], // Jakarta coordinates (longitude, latitude)
       zoom: 5, // Zoom level to show Indonesia
       projection: 'mercator' // Map projection
