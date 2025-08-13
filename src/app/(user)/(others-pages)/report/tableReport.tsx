@@ -51,7 +51,7 @@ export default function TableReport() {
         const urls = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = urls
-        a.download = `${id}.pdf`
+        a.download = `${url.split('/').pop()}`
         document.body.appendChild(a)
         a.click()
         a.remove()
