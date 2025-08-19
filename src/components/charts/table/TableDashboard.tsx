@@ -35,7 +35,7 @@ function useDescData() {
     if (selectedFilter && selectedFilter !== "Semua") {
       param.append("category", selectedFilter);
     }
-    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/desc_data"
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/desc_data?" + param.toString()
     fetch(url)
       .then(res => res.json())
       .then((result) => {
