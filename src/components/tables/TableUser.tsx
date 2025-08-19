@@ -32,7 +32,7 @@ interface Order {
   budget: string;
 }
 
-export default function BasicTableOne() {
+export default function TableUser() {
   const { data: tableData, loading, error, createUser, getUserById, updateUser, deleteUser } = useUsersData();
   
   // Modal states

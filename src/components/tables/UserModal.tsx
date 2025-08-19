@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Modal } from "../ui/modal";
 import { LocationSelector } from "../select/LocationSelector";
 import { useLocationStore } from "../../store/locationStore";
+import { useLocationStoreTemp } from "./hook";
 
 interface UserModalProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ export const UserModal: React.FC<UserModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   
   const { resetSelections } = useLocationStore();
+    const { lastLocationId } = useLocationStoreTemp();
+  
 
   // Helper function to validate location_id format
   const isValidLocationId = (location_id: string) => {
@@ -117,9 +120,10 @@ export const UserModal: React.FC<UserModalProps> = ({
     if (location.kabupaten?.kd_kabupaten) parts.push(location.kabupaten.kd_kabupaten);
     if (location.kecamatan?.kd_kecamatan) parts.push(location.kecamatan.kd_kecamatan);
     if (location.kelurahan?.kd_kelurahan) parts.push(location.kelurahan.kd_kelurahan);
-    
+    console.log(parts);
+
     const locationId = parts.join('.');
-    setFormData(prev => ({ ...prev, location_id: locationId }));
+    setFormData(prev => ({ ...prev, location_id: lastLocationId || locationId }));
   }, []); // No dependencies needed as we're only updating local state
 
   const getTitle = () => {
@@ -195,6 +199,7 @@ export const UserModal: React.FC<UserModalProps> = ({
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Location</h3>
               {!isReadOnly ? (
                 <LocationSelector onLocationChange={handleLocationChange} showResetButton={false} />
+                
               ) : (
                 <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -246,7 +251,7 @@ export const UserModal: React.FC<UserModalProps> = ({
                 {!isReadOnly && (
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || !formData.name || !formData.phone || lastLocationId === ""}
                     className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? "Saving..." : mode === "create" ? "Create" : "Update"}

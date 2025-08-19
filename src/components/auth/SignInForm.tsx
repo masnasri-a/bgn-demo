@@ -22,12 +22,49 @@ export default function SignInForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "admin" && password === "secret") {
-      localStorage.setItem("auth", JSON.stringify({ username }));
-      window.location.replace("/");
-    } else {
-      setError("Invalid username or password");
-    }
+    const url = 'https://bgn-be.anakanjeng.site/auth/login'
+    const data = { username, password };
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error('Network response was not ok');
+      })
+      .then(data => {
+        localStorage.setItem("auth", JSON.stringify({ username }));
+        localStorage.setItem("location_id", JSON.stringify(data.location_id));
+        if (data.location_id !== null) {
+          fetch(`https://bgn-be.anakanjeng.site/locations/select?kd_propinsi=${data.location_id}`)
+            .then(response => {
+              if (response.ok) {
+                return response.json();
+              }
+              throw new Error('Network response was not ok');
+            })
+            .then(data => {
+              localStorage.setItem("kd_propinsi", JSON.stringify(data.kd_propinsi));
+              localStorage.setItem("nm_propinsi", JSON.stringify(data.nm_propinsi));
+              window.location.replace("/");
+            })
+            .catch(error => {
+              setError("Failed to fetch location data");
+            });
+        } else {
+          window.location.replace("/");
+        }
+
+      })
+      .catch(error => {
+        setError("Invalid username or password");
+      });
   };
 
   React.useEffect(() => {

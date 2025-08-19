@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import ComponentCard from "@/components/common/ComponentCard"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useSelectFilterStore } from "@/components/select/select-filter"
+import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "../maps/dropdown/hook"
+import { useDateRangeStore } from "@/store/dateRangeStore"
 
 const SENTIMENT_COLORS: Record<string, string> = {
   positif: "#34d399", // green
@@ -16,13 +18,25 @@ const SENTIMENT_COLORS: Record<string, string> = {
 function useSentimentData() {
   const [data, setData] = useState<{ sentiment: string; total: number }[]>([])
   const [loading, setLoading] = useState(true)
-    const { selectedFilter } = useSelectFilterStore();
+  const { selectedFilter } = useSelectFilterStore();
+  const { startDate, endDate } = useDateRangeStore();
+  const { selected: selectedProv } = useProvinceStore();
+  const { selected: selectedKab } = useKabupatenStore();
+  const { selected: selectedKec } = useKecamatanStore();
+  const { selected: selectedKel } = useKelurahanStore();
 
   useEffect(() => {
-    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_sentiment"
+    let param = new URLSearchParams();
+    if (selectedProv !== null) param.append("kd_propinsi", selectedProv.kd_propinsi);
+    if (selectedKab !== null) param.append("kd_kabupaten", selectedKab.kd_kabupaten);
+    if (selectedKec !== null) param.append("kd_kecamatan", selectedKec.kd_kecamatan);
+    if (selectedKel !== null) param.append("kd_kelurahan", selectedKel.kd_kelurahan);
+    if (startDate) param.append("start_date", startDate);
+    if (endDate) param.append("end_date", endDate);
     if (selectedFilter && selectedFilter !== "Semua") {
-      url += `?category=${encodeURIComponent(selectedFilter)}`;
+      param.append("category", selectedFilter);
     }
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_sentiment?" + param.toString();
     fetch(url)
       .then(res => res.json())
       .then((result: { sentiment: string; total: number }[]) => {
@@ -67,7 +81,7 @@ export default function PieChartSentiment() {
         <div className="flex flex-wrap justify-center gap-4 mt-6">
           {generateFillColor(data).map(item => (
             <div key={item.sentiment} className="flex items-center gap-2 text-sm">
-              <span style={{background:item.fill, width:16, height:16, borderRadius:4, display:'inline-block', border:'1px solid #eee'}}></span>
+              <span style={{ background: item.fill, width: 16, height: 16, borderRadius: 4, display: 'inline-block', border: '1px solid #eee' }}></span>
               <span className="font-medium capitalize">{item.sentiment}</span>
               <span className="text-xs text-gray-500">({item.total})</span>
             </div>

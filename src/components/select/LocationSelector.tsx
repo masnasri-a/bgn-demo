@@ -6,6 +6,7 @@ import { ProvinsiSelect } from './provinsi-select';
 import { KabupatenSelect, KecamatanSelect, KelurahanSelect } from '.';
 import Button from '../ui/button/Button';
 import type { LocationChangeCallback } from '../../types/location';
+import { useLocationStoreTemp } from '../tables/hook';
 
 interface LocationSelectorProps {
   className?: string;
@@ -27,6 +28,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [selectedKecamatanId, setSelectedKecamatanId] = useState<string>('');
   const [selectedKelurahanId, setSelectedKelurahanId] = useState<string>('');
 
+  const { setLastLocationId } = useLocationStoreTemp();
+
   const {
     selectedProvinsi,
     selectedKabupaten,
@@ -42,6 +45,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     setSelectedKabupatenId('');
     setSelectedKecamatanId('');
     setSelectedKelurahanId('');
+    setLastLocationId(provinsiId);
   }, []);
 
   // Handle kabupaten selection
@@ -49,18 +53,21 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     setSelectedKabupatenId(kabupatenId);
     setSelectedKecamatanId('');
     setSelectedKelurahanId('');
+    setLastLocationId(`${selectedProvinsiId}.${kabupatenId}`);
   }, []);
 
   // Handle kecamatan selection
   const handleKecamatanChange = useCallback((kecamatanId: string) => {
     setSelectedKecamatanId(kecamatanId);
     setSelectedKelurahanId('');
+    setLastLocationId(`${selectedProvinsiId}.${selectedKabupatenId}.${kecamatanId}`);
   }, []);
 
   // Handle kelurahan selection
   const handleKelurahanChange = useCallback((kelurahanId: string) => {
     setSelectedKelurahanId(kelurahanId);
-    
+    setLastLocationId(`${selectedProvinsiId}.${selectedKabupatenId}.${selectedKecamatanId}.${kelurahanId}`);
+
     // Generate and notify location ID when kelurahan is selected
     const locationId = `${selectedProvinsiId}.${selectedKabupatenId}.${selectedKecamatanId}.${kelurahanId}`;
     onChange?.(locationId);
@@ -74,6 +81,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       kecamatan: selectedKecamatan,
       kelurahan: selectedKelurahan
     });
+    
   }, [selectedProvinsi, selectedKabupaten, selectedKecamatan, selectedKelurahan, onLocationChange]);
 
   React.useEffect(() => {
@@ -134,7 +142,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       )}
 
       {/* Selected Location Summary */}
-      {selectedProvinsi && (
+      {/* {selectedProvinsi && (
         <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Selected Location
@@ -152,7 +160,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Reset Button */}
       {showResetButton && (selectedProvinsiId || selectedKabupatenId || selectedKecamatanId || selectedKelurahanId) && (

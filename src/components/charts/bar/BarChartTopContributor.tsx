@@ -16,6 +16,8 @@ export const description = "A horizontal bar chart"
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSelectFilterStore } from "@/components/select/select-filter"
+import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "../maps/dropdown/hook"
+import { useDateRangeStore } from "@/store/dateRangeStore"
 
 const BLUE_SKY = "#38bdf8"
 
@@ -24,8 +26,23 @@ function useContributorData() {
     const [loading, setLoading] = useState(true)
     const { selectedFilter } = useSelectFilterStore();
 
+    const { selected: selectedProv } = useProvinceStore();
+    const { selected: selectedKab } = useKabupatenStore();
+    const { selected: selectedKec } = useKecamatanStore();
+    const { selected: selectedKel } = useKelurahanStore();
+    const { startDate, endDate } = useDateRangeStore();
+
+
     useEffect(() => {
-        let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_created_by";
+        let param = new URLSearchParams();
+        if (selectedProv !== null) param.append("kd_propinsi", selectedProv.kd_propinsi);
+        if (selectedKab !== null) param.append("kd_kabupaten", selectedKab.kd_kabupaten);
+        if (selectedKec !== null) param.append("kd_kecamatan", selectedKec.kd_kecamatan);
+        if (selectedKel !== null) param.append("kd_kelurahan", selectedKel.kd_kelurahan);
+        if (startDate) param.append("start_date", startDate);
+        if (endDate) param.append("end_date", endDate);
+
+        let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/total_by_created_by?" + param.toString();
         if (selectedFilter && selectedFilter !== "Semua") {
             url += `?category=${encodeURIComponent(selectedFilter)}`;
         }
@@ -40,7 +57,7 @@ function useContributorData() {
             })
             .catch(() => setChartData([]))
             .finally(() => setLoading(false))
-    }, [selectedFilter])
+    }, [selectedFilter, startDate, endDate, selectedProv, selectedKab, selectedKec, selectedKel])
     return { chartData, loading }
 }
 
@@ -63,7 +80,7 @@ export function BarChartTopContributor() {
                         accessibilityLayer
                         data={chartData}
                         layout="vertical"
-                        margin={{  }}
+                        margin={{}}
                     >
                         <XAxis type="number" dataKey="total" hide />
                         <YAxis

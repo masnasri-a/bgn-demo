@@ -10,8 +10,16 @@ type Province = {
 const ProvinsiDropdown: React.FC = () => {
 	const [provinces, setProvinces] = useState<Province[]>([]);
     const { selected: selectedProv, setSelected: setSelectedProv } = useProvinceStore();
+    const [disabled, setDisabled] = useState(false);
 
 	useEffect(() => {
+        const locationId = localStorage.getItem("kd_propinsi");
+        const locationName = localStorage.getItem("nm_propinsi");
+
+        if (locationId && locationName) {
+            setDisabled(true);
+        }
+
 		fetch('https://bgn-be.anakanjeng.site/maps/centroid')
 			.then((res) => res.json())
 			.then((data) => {
@@ -28,6 +36,7 @@ const ProvinsiDropdown: React.FC = () => {
 	return (
         <Select
             value={selectedProv?.kd_propinsi || 'all'}
+            disabled={disabled}
             onValueChange={(value) => {
                 const selected = provinces.find(prov => prov.kd_propinsi === value);
                 if (selected) {

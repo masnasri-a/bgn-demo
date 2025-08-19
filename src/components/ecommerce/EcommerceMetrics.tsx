@@ -4,15 +4,30 @@ import Badge from "../ui/badge/Badge";
 import { ArrowDownIcon, ArrowUpIcon, BoxIconLine, GroupIcon } from "@/icons";
 import { HiOutlineClipboardCheck, HiOutlinePresentationChartBar } from "react-icons/hi";
 import { Skeleton } from "../ui/skeleton";
+import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "../charts/maps/dropdown/hook";
 
 export const EcommerceMetrics = () => {
   const [stats, setStats] = React.useState({ total: 0, month_total: 0 });
   const [loading, setLoading] = React.useState(true);
 
+      const { selected: selectedProv } = useProvinceStore();
+      const { selected: selectedKab } = useKabupatenStore();
+      const { selected: selectedKec } = useKecamatanStore();
+      const { selected: selectedKel } = useKelurahanStore();
+
   React.useEffect(() => {
+    console.log(selectedProv, selectedKab, selectedKec, selectedKel);
+
     const fetchStats = async () => {
       try {
-        const response = await fetch(process.env.NEXT_PUBLIC_BASE_API+'/report_user/statistics');
+        setLoading(true);
+        let param = new URLSearchParams();
+        if (selectedProv !== null) param.append("kd_propinsi", selectedProv.kd_propinsi);
+        if (selectedKab !== null) param.append("kd_kabupaten", selectedKab.kd_kabupaten);
+        if (selectedKec !== null) param.append("kd_kecamatan", selectedKec.kd_kecamatan);
+        if (selectedKel !== null) param.append("kd_kelurahan", selectedKel.kd_kelurahan);
+        console.log("param : "+param);
+        const response = await fetch(process.env.NEXT_PUBLIC_BASE_API+'/report_user/statistics?' + param.toString());
         const data = await response.json();
         setStats(data);
       } catch (error) {
@@ -23,7 +38,7 @@ export const EcommerceMetrics = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [selectedProv, selectedKab, selectedKec, selectedKel]);
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
       {/* <!-- Metric Item Start --> */}

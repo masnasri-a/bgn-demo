@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import ComponentCard from "@/components/common/ComponentCard"
 import { ChartContainer } from "@/components/ui/chart"
+import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "../maps/dropdown/hook"
 
 // Helper to generate random color from a palette
 const COLORS = [
@@ -27,7 +28,17 @@ function useWordCloudData() {
   const [loading, setLoading] = useState(true)
       const { selectedFilter } = useSelectFilterStore();
   
+    const { selected: selectedProv } = useProvinceStore();
+    const { selected: selectedKab } = useKabupatenStore();
+    const { selected: selectedKec } = useKecamatanStore();
+    const { selected: selectedKel } = useKelurahanStore();
   useEffect(() => {
+
+        let param = new URLSearchParams();
+        if (selectedProv !== null) param.append("kd_propinsi", selectedProv.kd_propinsi);
+        if (selectedKab !== null) param.append("kd_kabupaten", selectedKab.kd_kabupaten);
+        if (selectedKec !== null) param.append("kd_kecamatan", selectedKec.kd_kecamatan);
+        if (selectedKel !== null) param.append("kd_kelurahan", selectedKel.kd_kelurahan);
     let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/wordcloud"
     if (selectedFilter && selectedFilter !== "Semua") {
       url += `?category=${encodeURIComponent(selectedFilter)}`;

@@ -13,8 +13,7 @@ const KabupatenDropdown: React.FC = () => {
     const { selected: selectedKab, setSelected: setSelectedKab } = useKabupatenStore();
 
 	useEffect(() => {
-		console.log("selectedProv : "+JSON.stringify(selectedProv));
-		
+		console.log("selectedProv di kabupaten : "+JSON.stringify(selectedProv));
 		fetch('https://bgn-be.anakanjeng.site/maps/centroid?kd_propinsi=' + selectedProv?.kd_propinsi)
 			.then((res) => res.json())
 			.then((data) => {
@@ -31,6 +30,7 @@ const KabupatenDropdown: React.FC = () => {
 	return (
 		<Select
 			value={selectedKab?.kd_kabupaten || 'all'}
+			disabled={!selectedProv}
 			onValueChange={(value) => {
 				const selected = kabupatens.find(kab => kab.kd_kabupaten === value);
 				if (selected) {

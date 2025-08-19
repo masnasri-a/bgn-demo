@@ -18,17 +18,34 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "../maps/dropdown/hook"
 
 export const description = "A donut chart"
 
 
 import { useEffect, useState } from "react"
+import { useDateRangeStore } from "@/store/dateRangeStore"
 
 function useChartData() {
   const [chartData, setChartData] = useState<{ category: string; total: number }[]>([])
   const [loading, setLoading] = useState(true)
+
+    const { selected: selectedProv } = useProvinceStore();
+    const { selected: selectedKab } = useKabupatenStore();
+    const { selected: selectedKec } = useKecamatanStore();
+    const { selected: selectedKel } = useKelurahanStore();
+      const { startDate, endDate } = useDateRangeStore();
+    
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_BASE_API+"/report_user/total_by_category")
+    let param = new URLSearchParams();
+        if (selectedProv !== null) param.append("kd_propinsi", selectedProv.kd_propinsi);
+        if (selectedKab !== null) param.append("kd_kabupaten", selectedKab.kd_kabupaten);
+        if (selectedKec !== null) param.append("kd_kecamatan", selectedKec.kd_kecamatan);
+        if (selectedKel !== null) param.append("kd_kelurahan", selectedKel.kd_kelurahan);
+        if (startDate) param.append("start_date", startDate);
+        if (endDate) param.append("end_date", endDate);
+
+    fetch(process.env.NEXT_PUBLIC_BASE_API+"/report_user/total_by_category?" + param.toString())
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

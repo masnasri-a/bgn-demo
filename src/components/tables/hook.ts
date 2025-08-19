@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { create } from 'zustand';
 
 interface ApiUser {
   id: number;
@@ -182,3 +183,13 @@ export const useUsersData = () => {
     refreshUsers: fetchUsers 
   };
 };
+
+interface LocationStore {
+  lastLocationId: string | null;
+  setLastLocationId: (locationId: string) => void;
+}
+
+export const useLocationStoreTemp = create<LocationStore>((set) => ({
+  lastLocationId: null,
+  setLastLocationId: (locationId: string) => set({ lastLocationId: locationId }),
+}));

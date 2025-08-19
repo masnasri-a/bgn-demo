@@ -7,6 +7,7 @@ import {
   ChartContainer,
 } from "@/components/ui/chart"
 import { useSelectFilterStore } from "@/components/select/select-filter"
+import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "../maps/dropdown/hook"
 
 // Simple heatmap rendering using divs, styled to match other charts
 const BLUE_SKY = "#38bdf8"
@@ -16,10 +17,23 @@ function useHeatmapData() {
   const [loading, setLoading] = useState(true)
   const { selectedFilter } = useSelectFilterStore();
 
+
+  const { selected: selectedProv } = useProvinceStore();
+  const { selected: selectedKab } = useKabupatenStore();
+  const { selected: selectedKec } = useKecamatanStore();
+  const { selected: selectedKel } = useKelurahanStore();
+
+
   useEffect(() => {
-    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/heatmap"
+
+    let param = new URLSearchParams();
+    if (selectedProv !== null) param.append("kd_propinsi", selectedProv.kd_propinsi);
+    if (selectedKab !== null) param.append("kd_kabupaten", selectedKab.kd_kabupaten);
+    if (selectedKec !== null) param.append("kd_kecamatan", selectedKec.kd_kecamatan);
+    if (selectedKel !== null) param.append("kd_kelurahan", selectedKel.kd_kelurahan);
+    let url = process.env.NEXT_PUBLIC_BASE_API + "/report_user/heatmap?" + param.toString();
     if (selectedFilter && selectedFilter !== "Semua") {
-      url += `?category=${encodeURIComponent(selectedFilter)}`;
+      url += `&category=${encodeURIComponent(selectedFilter)}`;
     }
     fetch(url)
       .then(res => res.json())

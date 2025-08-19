@@ -256,8 +256,8 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
 
   return (
     <div className={`relative ${className}`}>
-      <div className="mb-2 flex items-center gap-2 justify-end">
-        <label htmlFor="provinsi" className="text-sm font-medium">Provinsi:</label>
+      {/* <div className="mb-2 flex items-center gap-2 justify-end"> */}
+        {/* <label htmlFor="provinsi" className="text-sm font-medium">Provinsi:</label> */}
         {/* <Select
           value={selectedProvinsi}
           onValueChange={setSelectedProvinsi}
@@ -273,11 +273,11 @@ const MapboxChart: React.FC<MapboxChartProps> = ({ className = "", height = "400
           </SelectContent>
         </Select> */}
 
-        <ProvinsiDropdown />
-        <KabupatenDropdown />
-        <KecamatanDropdown />
-        <KelurahanDropdown />
-      </div>
+        {/* <ProvinsiDropdown /> */}
+        {/* <KabupatenDropdown /> */}
+        {/* <KecamatanDropdown /> */}
+        {/* <KelurahanDropdown /> */}
+      {/* </div> */}
       <div
         ref={mapContainerRef}
         style={{ width: '100%', height: '700px', position: 'relative' }}

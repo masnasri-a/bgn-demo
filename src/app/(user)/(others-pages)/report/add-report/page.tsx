@@ -5,6 +5,11 @@ import DatePicker from '@/components/form/date-picker'
 import PageBreadcrumb from "@/components/common/PageBreadCrumb"
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import ProvinsiDropdown from "@/components/charts/maps/dropdown/provinsi";
+import KabupatenDropdown from "@/components/charts/maps/dropdown/kabupaten";
+import KecamatanDropdown from "@/components/charts/maps/dropdown/kecamatan";
+import KelurahanDropdown from "@/components/charts/maps/dropdown/kelurahan";
+import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "@/components/charts/maps/dropdown/hook";
 
 
 export default function AddReportPage() {
@@ -13,6 +18,11 @@ export default function AddReportPage() {
     const [endDate, setEndDate] = useState("");
     const [error, setError] = useState("");
     const [disabled, setDisabled] = useState(false);
+
+    const { selected: selectedProv } = useProvinceStore();
+    const { selected: selectedKab } = useKabupatenStore();
+    const { selected: selectedKec } = useKecamatanStore();
+    const { selected: selectedKel } = useKelurahanStore();
 
     const router = useRouter();
 
@@ -27,19 +37,21 @@ export default function AddReportPage() {
             return;
         }
         setError("");
-        
+
         toast("Sedang generate report...");
         setDisabled(true);
 
         // Fetch API /report/generate (GET)
         try {
-            const params = new URLSearchParams({
-                location_id: '31.17',
-                start_date: startDate,
-                end_date: endDate,
-                title,
-            }).toString();
-            const url = process.env.NEXT_PUBLIC_BASE_API + '/report/generate?' + params;
+            const params = new URLSearchParams();
+            if (title) params.append("title", title);
+            if (startDate) params.append("start_date", startDate);
+            if (endDate) params.append("end_date", endDate);
+            if (selectedProv) params.append("kd_propinsi", selectedProv.kd_propinsi);
+            if (selectedKab) params.append("kd_kabupaten", selectedKab.kd_kabupaten);
+            if (selectedKec) params.append("kd_kecamatan", selectedKec.kd_kecamatan);
+            if (selectedKel) params.append("kd_kelurahan", selectedKel.kd_kelurahan);
+            const url = process.env.NEXT_PUBLIC_BASE_API + '/report/generate?' + params.toString();
             const res = await fetch(url, {
                 method: 'GET',
             });
@@ -97,6 +109,12 @@ export default function AddReportPage() {
                             />
                         </div>
                     </div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih Lokasi </label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"></label>
+                    <ProvinsiDropdown />
+                    <KabupatenDropdown />
+                    <KecamatanDropdown />
+                    <KelurahanDropdown />
                     {error && (
                         <div className="col-span-2 text-red-600 text-sm mt-2">{error}</div>
                     )}

@@ -45,7 +45,6 @@ export const useProvinceStore = create<ProvinceStore>((set) => ({
     selected: null,
     setSelected: (prov) => {
         set({ selected: prov })
-        // Reset kabupaten and kecamatan selections
         useKabupatenStore.setState({ selected: null });
         useKecamatanStore.setState({ selected: null });
         useKelurahanStore.setState({ selected: null });
