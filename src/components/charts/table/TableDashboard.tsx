@@ -6,6 +6,9 @@ import ComponentCard from "@/components/common/ComponentCard"
 import { useSelectFilterStore } from "@/components/select/select-filter"
 import { useKabupatenStore, useKecamatanStore, useKelurahanStore, useProvinceStore } from "../maps/dropdown/hook"
 import { useDateRangeStore } from "@/store/dateRangeStore"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import ModalDetail from "./ModalDetail"
 
 function useDescData() {
   const [data, setData] = useState<{
@@ -58,6 +61,7 @@ export default function TableDashboard() {
 
 
   return (
+    <Dialog>
     <ComponentCard title="Data Laporan" className="w-full h-[450px]">
       {loading ? (
         <Skeleton className="w-full h-[300px]" />
@@ -82,7 +86,11 @@ export default function TableDashboard() {
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{row.who}</td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{row.where.length > 25 ? row.where.substring(0, 25) + '...' : row.where}</td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                      <a href="/cctv/kemang-jakarta-selatan" className="text-blue-500 hover:underline">View</a>
+                      <DialogTrigger asChild>
+                        <Button variant="link" className="text-blue-500 hover:underline">
+                          Detail
+                        </Button>
+                      </DialogTrigger>
                     </td>
                   </tr>
                 ))}
@@ -92,5 +100,14 @@ export default function TableDashboard() {
         </div>
       )}
     </ComponentCard>
+    <DialogContent className="sm:max-w-3xl">
+    <DialogHeader>
+      <DialogTitle>Detail Laporan</DialogTitle>
+      <DialogDescription asChild>
+        <ModalDetail />
+      </DialogDescription>
+    </DialogHeader>
+  </DialogContent>
+    </Dialog>
   )
 }
